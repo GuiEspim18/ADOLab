@@ -1,22 +1,29 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 [ApiController]
-[Route("api/[controller]")]
+[Authorize]
+[Route("api/v2/[controller]")]
 public class AlunosController : ControllerBase
 {
     private readonly AlunoRepository _repo;
-    public AlunosController()
+
+    public AlunosController(IConfiguration config)
     {
-        _repo = new AlunoRepository("sua_connection_string_aqui");
+        _repo = new AlunoRepository(config.GetConnectionString("SqlServerConnection")!);
         _repo.GarantirEsquema();
     }
+
     [HttpGet]
     public IActionResult Get() => Ok(_repo.Listar());
+
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
         var aluno = _repo.Buscar("Id", id).FirstOrDefault();
-        if (aluno == null) return NotFound();
-        return Ok(aluno);
+        return aluno == null ? NotFound() : Ok(aluno);
     }
+
     [HttpPost]
     public IActionResult Post([FromBody] Aluno aluno)
     {
@@ -24,18 +31,18 @@ public class AlunosController : ControllerBase
         aluno.Id = novoId;
         return CreatedAtAction(nameof(GetById), new { id = novoId }, aluno);
     }
+
     [HttpPut("{id}")]
     public IActionResult Put(int id, [FromBody] Aluno aluno)
     {
         var linhas = _repo.Atualizar(id, aluno.Nome, aluno.Idade, aluno.Email, aluno.DataNascimento);
-        if (linhas == 0) return NotFound();
-        return NoContent();
+        return linhas == 0 ? NotFound() : NoContent();
     }
+
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
     {
         var linhas = _repo.Excluir(id);
-        if (linhas == 0) return NotFound();
-        return NoContent();
+        return linhas == 0 ? NotFound() : NoContent();
     }
 }

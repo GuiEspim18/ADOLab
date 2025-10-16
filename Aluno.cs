@@ -1,47 +1,20 @@
 /// <summary>
-/// Representa uma entidade de estudante.
+/// Representa um usuário do sistema (para login/autenticação).
 /// </summary>
-public class Aluno
+public class Usuario
 {
-    /// <summary>
-    /// Obtém ou define o ID do estudante.
-    /// </summary>
     public int Id { get; set; }
+    public string Nome { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string SenhaHash { get; set; } = "";
 
-    /// <summary>
-    /// Obtém ou define o nome do estudante.
-    /// </summary>
-    public string Nome { get; set; }
+    public Usuario() { }
 
-    /// <summary>
-    /// Obtém ou define a idade do estudante.
-    /// </summary>
-    public int Idade { get; set; }
-
-    /// <summary>
-    /// Obtém ou define o email do estudante.
-    /// </summary>
-    public string Email { get; set; }
-
-    /// <summary>
-    /// Obtém ou define a data de nascimento do estudante.
-    /// </summary>
-    public DateTime DataNascimento { get; set; }
-
-    /// <summary>
-    /// Inicializa uma nova instância da classe <see cref="Aluno"/>.
-    /// </summary>
-    /// <param name="id">O ID do estudante.</param>
-    /// <param name="nome">O nome do estudante.</param>
-    /// <param name="idade">A idade do estudante.</param>
-    /// <param name="email">O email do estudante.</param>
-    /// <param name="dataNascimento">A data de nascimento do estudante.</param>
-    public Aluno(int id, string nome, int idade, string email, DateTime dataNascimento)
+    public Usuario(int id, string nome, string email, string senhaHash)
     {
         Id = id;
         Nome = nome;
-        Idade = idade;
         Email = email;
-        DataNascimento = dataNascimento;
+        SenhaHash = senhaHash;
     }
 }

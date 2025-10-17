@@ -18,7 +18,7 @@ public class AuthController : ControllerBase
     public IActionResult Register([FromBody] Usuario usuario)
     {
         _userRepo.Registrar(usuario.Nome, usuario.Email, usuario.SenhaHash);
-        return Ok(new { message = "Usu·rio registrado com sucesso." });
+        return Ok(new { message = "Usu√°rio registrado com sucesso." });
     }
 
     [HttpPost("login")]
@@ -26,7 +26,7 @@ public class AuthController : ControllerBase
     {
         var user = _userRepo.Autenticar(credenciais.Email, credenciais.SenhaHash);
         if (user == null)
-            return Unauthorized(new { message = "Credenciais inv·lidas." });
+            return Unauthorized(new { message = "Credenciais inv√°lidas." });
 
         var token = _jwt.GerarToken(user);
         return Ok(new { token });

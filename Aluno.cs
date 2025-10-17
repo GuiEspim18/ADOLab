@@ -1,20 +1,10 @@
-/// <summary>
-/// Representa um usuário do sistema (para login/autenticação).
-/// </summary>
-public class Usuario
+public class Aluno
 {
     public int Id { get; set; }
     public string Nome { get; set; } = "";
+    public int Idade { get; set; }
     public string Email { get; set; } = "";
-    public string SenhaHash { get; set; } = "";
+    public DateTime DataNascimento { get; set; }
 
-    public Usuario() { }
-
-    public Usuario(int id, string nome, string email, string senhaHash)
-    {
-        Id = id;
-        Nome = nome;
-        Email = email;
-        SenhaHash = senhaHash;
-    }
+    public List<Matricula> Matriculas { get; set; } = new();
 }

@@ -1,5 +1,4 @@
-using Microsoft.Data.SqlClient;
-using System.Data;
+using MySql.Data.MySqlClient;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,28 +14,27 @@ public class UsuarioRepository
     public void GarantirEsquema()
     {
         const string ddl = @"
-        IF OBJECT_ID('dbo.Usuarios', 'U') IS NULL
-        BEGIN
-            CREATE TABLE dbo.Usuarios (
-                Id INT IDENTITY(1,1) PRIMARY KEY,
-                Nome NVARCHAR(100) NOT NULL,
-                Email NVARCHAR(100) UNIQUE NOT NULL,
-                SenhaHash NVARCHAR(256) NOT NULL
-            );
-        END";
-        using var conn = new SqlConnection(ConnectionString);
+        CREATE TABLE IF NOT EXISTS Usuarios (
+            Id INT AUTO_INCREMENT PRIMARY KEY,
+            Nome VARCHAR(100) NOT NULL,
+            Email VARCHAR(100) UNIQUE NOT NULL,
+            SenhaHash VARCHAR(256) NOT NULL
+        );";
+
+        using var conn = new MySqlConnection(ConnectionString);
         conn.Open();
-        using var cmd = new SqlCommand(ddl, conn);
+        using var cmd = new MySqlCommand(ddl, conn);
         cmd.ExecuteNonQuery();
     }
 
     public void Registrar(string nome, string email, string senha)
     {
         var hash = HashSenha(senha);
-        const string sql = "INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash) VALUES (@Nome, @Email, @SenhaHash)";
-        using var conn = new SqlConnection(ConnectionString);
+        const string sql = @"INSERT INTO Usuarios (Nome, Email, SenhaHash) VALUES (@Nome, @Email, @SenhaHash);";
+
+        using var conn = new MySqlConnection(ConnectionString);
         conn.Open();
-        using var cmd = new SqlCommand(sql, conn);
+        using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@Nome", nome);
         cmd.Parameters.AddWithValue("@Email", email);
         cmd.Parameters.AddWithValue("@SenhaHash", hash);
@@ -45,18 +43,25 @@ public class UsuarioRepository
 
     public Usuario? Autenticar(string email, string senha)
     {
-        const string sql = "SELECT Id, Nome, Email, SenhaHash FROM dbo.Usuarios WHERE Email = @Email";
-        using var conn = new SqlConnection(ConnectionString);
+        const string sql = "SELECT Id, Nome, Email, SenhaHash FROM Usuarios WHERE Email = @Email";
+
+        using var conn = new MySqlConnection(ConnectionString);
         conn.Open();
-        using var cmd = new SqlCommand(sql, conn);
+        using var cmd = new MySqlCommand(sql, conn);
         cmd.Parameters.AddWithValue("@Email", email);
+
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
 
-        var hash = (string)reader["SenhaHash"];
+        var hash = reader["SenhaHash"].ToString()!;
         if (!VerificarSenha(senha, hash)) return null;
 
-        return new Usuario((int)reader["Id"], (string)reader["Nome"], (string)reader["Email"], hash);
+        return new Usuario(
+            Convert.ToInt32(reader["Id"]),
+            reader["Nome"].ToString()!,
+            reader["Email"].ToString()!,
+            hash
+        );
     }
 
     private static string HashSenha(string senha)

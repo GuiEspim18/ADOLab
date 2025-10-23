@@ -1,48 +1,59 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Authorize]
-[Route("api/v2/[controller]")]
+[Route("api/v1/[controller]")]
 public class AlunosController : ControllerBase
 {
-    private readonly AlunoRepository _repo;
+    private readonly EscolaContext _context;
 
-    public AlunosController(IConfiguration config)
+    public AlunosController(EscolaContext context)
     {
-        _repo = new AlunoRepository(config.GetConnectionString("SqlServerConnection")!);
-        _repo.GarantirEsquema();
+        _context = context;
     }
 
     [HttpGet]
-    public IActionResult Get() => Ok(_repo.Listar());
+    public async Task<IActionResult> Get() => Ok(await _context.Alunos.ToListAsync());
 
     [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var aluno = _repo.Buscar("Id", id).FirstOrDefault();
+        var aluno = await _context.Alunos
+            .Include(a => a.Matriculas)
+            .ThenInclude(m => m.Disciplina)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
         return aluno == null ? NotFound() : Ok(aluno);
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] Aluno aluno)
+    public async Task<IActionResult> Post([FromBody] Aluno aluno)
     {
-        var novoId = _repo.Inserir(aluno.Nome, aluno.Idade, aluno.Email, aluno.DataNascimento);
-        aluno.Id = novoId;
-        return CreatedAtAction(nameof(GetById), new { id = novoId }, aluno);
+        _context.Alunos.Add(aluno);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = aluno.Id }, aluno);
     }
 
     [HttpPut("{id}")]
-    public IActionResult Put(int id, [FromBody] Aluno aluno)
+    public async Task<IActionResult> Put(int id, [FromBody] Aluno aluno)
     {
-        var linhas = _repo.Atualizar(id, aluno.Nome, aluno.Idade, aluno.Email, aluno.DataNascimento);
-        return linhas == 0 ? NotFound() : NoContent();
+        if (id != aluno.Id) return BadRequest();
+
+        _context.Entry(aluno).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var linhas = _repo.Excluir(id);
-        return linhas == 0 ? NotFound() : NoContent();
+        var aluno = await _context.Alunos.FindAsync(id);
+        if (aluno == null) return NotFound();
+
+        _context.Alunos.Remove(aluno);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 }
